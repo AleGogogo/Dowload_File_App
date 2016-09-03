@@ -1,15 +1,26 @@
 package xiaomeng.bupt.com.donload_file_app.Bean;
 
+import java.io.Serializable;
+
 /**
  * Created by rain on 2016/8/30.
  */
-public class FileInfo {
+public class FileInfo implements Serializable{
     private int id;
     private String name;
     private String url;
     private int start;
     private int end;
     private int finished;
+    private int length;
+
+    public int getLength() {
+        return length;
+    }
+
+    public void setLength(int length) {
+        this.length = length;
+    }
 
     public FileInfo(){}
 

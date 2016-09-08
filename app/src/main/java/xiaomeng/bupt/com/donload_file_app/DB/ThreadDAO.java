@@ -10,8 +10,8 @@ import xiaomeng.bupt.com.donload_file_app.greendao.ThreadInfoDao;
  */
 public interface ThreadDAO {
     void insertThread(ThreadInfo threadInfo);
-    void deleteThread(long id);
-    void upDateThread(String url, long id, int finished);
+    void deleteThread(String url);
+    void upDateThread(String url,long id,int finished);
     ArrayList<ThreadInfo> getThreads(String url);
     boolean isExist(String url,long thread_id);
 }

@@ -8,20 +8,21 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
 
 import xiaomeng.bupt.com.donload_file_app.Bean.FileInfo;
 import xiaomeng.bupt.com.donload_file_app.DB.ThreadInfoManager;
 import xiaomeng.bupt.com.donload_file_app.Service.DownLoadService;
 
 public class MainActivity extends Activity {
-
-    private Button mStartButton;
-    private Button mStopButton;
-    private ProgressBar mProgress;
-    private TextView mDownloadFileName;
-    private FileInfo mFileInfo;
+    private ListView mListView;
+    private ArrayList<FileInfo> mData;
+    private DownLoadAdapter mAdapter;
     public static ThreadInfoManager threadInfoManager;
 
     @Override
@@ -30,64 +31,71 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         initView();
         iniDate();
-        iniListener();
+
 
     }
 
 
     private void initView() {
-        mDownloadFileName = (TextView)findViewById(R.id.id_textView);
-        mProgress = (ProgressBar)findViewById(R.id.id_progressBar);
-        mStartButton =(Button)findViewById(R.id.id_button_start);
-        mStopButton = (Button)findViewById(R.id.id_button_stop);
+
+        mListView  = (ListView)findViewById(R.id.id_listview);
+
 
     }
+
     private void iniDate() {
-        mFileInfo = new FileInfo(1,"微博图片",
-                "http://ww4.sinaimg.cn/thumb180/4b4fcb71jw1eiiw88vtwnj20xc18gk2h.jpg",
-                0,0,0);
-        mDownloadFileName.setText(mFileInfo.getName());
-        mProgress.setMax(100);
+
+        mData = new ArrayList<>();
+
+        FileInfo FileInfo1 = new FileInfo(0, "慕课下载1.apK",
+                "http://www.imooc.com/mobile/imooc.apk",
+                0, 0, 0);
+        FileInfo FileInfo2 = new FileInfo(1, "慕课下载2.exe",
+                "http://www.imooc.com/download/Activator.exe",
+                0, 0, 0);
+        FileInfo FileInfo3 = new FileInfo(2, "慕课下载3.exe",
+                "http://www.imooc.com/download/iTunes64Setup.exe",
+                0, 0, 0);
+        FileInfo FileInfo4 = new FileInfo(3, "慕课下载4.exe",
+                "http://www.imooc.com/download/BaiduPlayerNetSetup_100.exe",
+                0, 0, 0);
+
+        mData.add(FileInfo1);
+        mData.add(FileInfo2);
+        mData.add(FileInfo3);
+        mData.add(FileInfo4);
+
+        mAdapter = new DownLoadAdapter(this,mData);
+        mListView.setAdapter(mAdapter);
+
         //注册广播
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(DownLoadService
                 .ACTION_UPDATE);
-        registerReceiver(broadcastReceiver,intentFilter);
-    }
-    private void iniListener() {
-        mStartButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, DownLoadService
-                        .class);
-                intent.setAction(DownLoadService.ACTION_START);
-                intent.putExtra("fileInfo",mFileInfo);
-                startService(intent);
-            }
-        });
-
-        mStopButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, DownLoadService
-                        .class);
-                intent.setAction(DownLoadService.ACTION_STOP);
-                intent.putExtra("fileInfo",mFileInfo);
-                startService(intent);
-            }
-        });
+        intentFilter.addAction(DownLoadService.ACTION_FINISHED);
+        registerReceiver(broadcastReceiver, intentFilter);
     }
 
-     //发送广播来告诉Activity更新UI
-    BroadcastReceiver broadcastReceiver  = new BroadcastReceiver() {
-         @Override
-         public void onReceive(Context context, Intent intent) {
-             if (DownLoadService.ACTION_UPDATE.equals(intent.getAction())) {
-                 int finished = intent.getIntExtra("finished", 0);
-                 mProgress.setProgress(finished);
-             }
-         }
-     };
+
+    //发送广播来告诉Activity更新UI
+    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (DownLoadService.ACTION_UPDATE.equals(intent.getAction())) {
+                int finished = intent.getIntExtra("finished", 0);
+                int id = intent.getIntExtra("id",0);
+                mAdapter.updateProgress(id,finished);
+            }else if (DownLoadService.ACTION_FINISHED.equals(intent.getAction()))
+
+            {
+
+                FileInfo fileInfo = (FileInfo) intent.getSerializableExtra("mfileInfo");
+                mAdapter.updateProgress(fileInfo.getId(),fileInfo.getFinished());
+                Toast.makeText(MainActivity.this,fileInfo.getName()+"下载完毕"
+                        ,Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
 
     @Override
     protected void onDestroy() {

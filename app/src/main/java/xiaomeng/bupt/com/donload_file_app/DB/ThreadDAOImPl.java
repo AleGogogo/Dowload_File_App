@@ -26,7 +26,7 @@ public class ThreadDAOImPl implements ThreadDAO {
     }
 
     @Override
-    public void insertThread(ThreadInfo threadInfo) {
+    public synchronized void insertThread(ThreadInfo threadInfo) {
 
         db = mHelper.getWritableDatabase();
         ThreadInfoDao dao =  mManager.initThreadInfo(db);
@@ -35,27 +35,33 @@ public class ThreadDAOImPl implements ThreadDAO {
     }
 
     @Override
-    public void deleteThread(long id) {
+    public synchronized void deleteThread(String url) {
         db = mHelper.getWritableDatabase();
         ThreadInfoDao dao =  mManager.initThreadInfo(db);
-        dao.deleteByKey(id);
+        ArrayList<ThreadInfo> list = getThreads(url);
+        for (ThreadInfo threadInfo :
+                list) {
+            dao.delete(threadInfo);
+        }
+
         db.close();
     }
 
     @Override
-    public void upDateThread(String url, long id, int finished) {
+    public synchronized void upDateThread(String url, long id, int finished) {
         ArrayList<ThreadInfo> list = new ArrayList<>();
-        db = mHelper.getReadableDatabase();
+        db = mHelper.getWritableDatabase();
         mDao = mManager.initThreadInfo(db);
         Query<ThreadInfo> query = mDao.queryBuilder()
                 .where(ThreadInfoDao.Properties.Url.eq(url),ThreadInfoDao.Properties.Id.eq(id))
                 .orderAsc(ThreadInfoDao.Properties.Id)
                 .build();
         list = (ArrayList<ThreadInfo>) query.list();
+        Log.d("TAG", "符合条件的线程数量为： "+list.size());
         ThreadInfo threadInfo = list.get(0);
         threadInfo.setFinished(finished);
         mDao.insert(threadInfo);
-
+        notifyAll();
     }
 
     @Override

@@ -15,9 +15,11 @@ import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import xiaomeng.bupt.com.donload_file_app.Bean.FileInfo;
-import xiaomeng.bupt.com.donload_file_app.greendao.ThreadInfo;
+
 
 
 /**
@@ -28,24 +30,27 @@ public class DownLoadService extends Service {
     public static final String ACTION_START = "ACTION_START";
     public static final String ACTION_STOP = "ACTION_STOP";
     public static final String ACTION_UPDATE = "ACTION_UPDATE";
+    public static final String ACTION_FINISHED = "ACTION_FINISHED";
     public static final String DOWNLOAD_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() +
             "/downloads";
     public static final int MSG_INIT  = 100;
-    private   DownLoadTask mTask;
+    private Map<Integer,DownLoadTask> task = new LinkedHashMap<Integer, DownLoadTask>();
+    private DownLoadTask mTask;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (ACTION_START.equals(intent.getAction())) {
             FileInfo fileInfo = (FileInfo) intent.getSerializableExtra("fileInfo");
             Log.d("TAG", "点击 start :" + fileInfo.getName());
             //初始化线程
-            new InitThread(fileInfo).start();
+            DownLoadTask.executorService.execute( new InitThread(fileInfo));
         } else if (ACTION_STOP.equals(intent.getAction())) {
             {
                 //停止下载
                 FileInfo fileInfo = (FileInfo) intent.getSerializableExtra("fileInfo");
                 Log.d("TAG", "点击 stop :" + fileInfo.getName());
-                if (mTask!=null){
-                    mTask.isPause = true;
+                DownLoadTask downLoadTask = task.get(fileInfo.getId());
+                if (downLoadTask!=null){
+                    downLoadTask.isPause = true;
                 }
             }
 
@@ -68,8 +73,12 @@ public class DownLoadService extends Service {
                     FileInfo file = (FileInfo) msg.obj;
                     Log.d("TAG", "初始化数据完成 ");
                     //开始下载
-                    mTask = new DownLoadTask(DownLoadService.this,file);
+                    mTask = new DownLoadTask(DownLoadService.this,file,3);
+
                     mTask.download();
+                    //一个下载任务里包含多个线程
+                    task.put(file.getId(),mTask);
+
                     break;
                 default:
             }

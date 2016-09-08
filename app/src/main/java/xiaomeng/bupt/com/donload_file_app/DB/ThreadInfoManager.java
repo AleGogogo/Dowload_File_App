@@ -12,7 +12,7 @@ import xiaomeng.bupt.com.donload_file_app.greendao.ThreadInfoDao;
  * Created by LYW on 2016/9/2.
  */
 public class ThreadInfoManager {
-    public static SQLiteDatabase db;
+
     public static DaoMaster daoMaster;
     public static DaoSession daoSession;
     public static DaoMaster.DevOpenHelper helper;

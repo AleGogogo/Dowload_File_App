@@ -19,7 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import xiaomeng.bupt.com.donload_file_app.Bean.FileInfo;
-
+import xiaomeng.bupt.com.donload_file_app.MainActivity;
 
 
 /**
@@ -78,7 +78,11 @@ public class DownLoadService extends Service {
                     mTask.download();
                     //一个下载任务里包含多个线程
                     task.put(file.getId(),mTask);
-
+                    Intent intent = new Intent(DownLoadService.this,
+                            MainActivity.class);
+                    intent.setAction(DownLoadService.ACTION_START);
+                    intent.putExtra("fileinfo",file);
+                    sendBroadcast(intent);
                     break;
                 default:
             }

@@ -1,6 +1,7 @@
 package xiaomeng.bupt.com.donload_file_app;
 
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 
 import xiaomeng.bupt.com.donload_file_app.Bean.FileInfo;
 import xiaomeng.bupt.com.donload_file_app.DB.ThreadInfoManager;
+import xiaomeng.bupt.com.donload_file_app.Notification.NotificationUtils;
 import xiaomeng.bupt.com.donload_file_app.Service.DownLoadService;
 
 public class MainActivity extends Activity {
@@ -24,7 +26,7 @@ public class MainActivity extends Activity {
     private ArrayList<FileInfo> mData;
     private DownLoadAdapter mAdapter;
     public static ThreadInfoManager threadInfoManager;
-
+    private NotificationUtils notificationUtils;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,11 +70,14 @@ public class MainActivity extends Activity {
         mAdapter = new DownLoadAdapter(this,mData);
         mListView.setAdapter(mAdapter);
 
+        notificationUtils = new NotificationUtils(this);
+
         //注册广播
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(DownLoadService
                 .ACTION_UPDATE);
         intentFilter.addAction(DownLoadService.ACTION_FINISHED);
+        intentFilter.addAction(DownLoadService.ACTION_START);
         registerReceiver(broadcastReceiver, intentFilter);
     }
 
@@ -88,11 +93,17 @@ public class MainActivity extends Activity {
             }else if (DownLoadService.ACTION_FINISHED.equals(intent.getAction()))
 
             {
-
                 FileInfo fileInfo = (FileInfo) intent.getSerializableExtra("mfileInfo");
                 mAdapter.updateProgress(fileInfo.getId(),fileInfo.getFinished());
                 Toast.makeText(MainActivity.this,fileInfo.getName()+"下载完毕"
                         ,Toast.LENGTH_SHORT).show();
+            }else if (DownLoadService.ACTION_START.equals(intent.getAction()))
+
+            {
+                FileInfo fileInfo = (FileInfo) intent.
+                        getSerializableExtra("fileinfo");
+                notificationUtils.showNotification(fileInfo);
+
             }
         }
     };
